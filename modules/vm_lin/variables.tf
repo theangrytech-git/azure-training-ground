@@ -61,3 +61,9 @@ variable "image" {
     version   = "latest"
   }
 }
+
+variable "availability_set_id" {
+  description = "The ID of the availability set to associate the Linux VM with (optional)."
+  type        = string
+  default     = null
+}

@@ -28,6 +28,7 @@ resource "azurerm_windows_virtual_machine" "uks_win_vm" {
   size                = var.vm_size
   admin_username      = var.admin_username
   admin_password      = var.admin_password
+  availability_set_id = var.availability_set_id
   network_interface_ids = [
     azurerm_network_interface.uks_win_nic.id
   ]

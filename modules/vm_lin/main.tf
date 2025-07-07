@@ -30,7 +30,7 @@ resource "azurerm_linux_virtual_machine" "uks_lin_vm" {
   admin_username      = var.admin_username
   admin_password      = var.admin_password
   disable_password_authentication = false
-
+  availability_set_id = var.availability_set_id
   network_interface_ids = [
     azurerm_network_interface.uks_lin_nic.id
   ]

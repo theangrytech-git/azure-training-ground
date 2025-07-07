@@ -146,11 +146,6 @@ module "vnet_uks_main" {
 }
 
 /*******************************************************************************
-                         CREATE SUBNETS
-*******************************************************************************/
-
-
-/*******************************************************************************
                          CREATE NETWORK SECURITY GROUPS
 *******************************************************************************/
 module "nsg_vm" {
@@ -278,6 +273,7 @@ module "win_vm_1" {
   admin_username      = "netco_user"
   admin_password      = random_password.vm_admin_password.result
   public_ip_enabled   = true
+  availability_set_id = azurerm_availability_set.uks_as_win.id
 
   tags = {
     environment = "training"
@@ -313,6 +309,7 @@ module "lin_vm_1" {
   admin_username      = "netco_user"
   admin_password      = random_password.vm_admin_password.result
   public_ip_enabled   = true
+  availability_set_id = azurerm_availability_set.uks_as_linux.id
 
   tags = {
     environment = "training"
@@ -357,6 +354,36 @@ module "vmss_win_1" {
   }
 }
 
+/*******************************************************************************
+                         CREATE AVAILABILITY SETS
+*******************************************************************************/
+
+resource "azurerm_availability_set" "uks_as_win" {
+  name                = "uks-aset-windows"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  platform_fault_domain_count  = 2
+  platform_update_domain_count = 5
+  managed                      = true
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+
+}
+
+resource "azurerm_availability_set" "uks_as_linux" {
+  name                = "uks-aset-linux"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  platform_fault_domain_count  = 2
+  platform_update_domain_count = 5
+  managed                      = true
+  tags = {
+    environment = "training"
+    owner       = "linux-team"
+  }
+}
 
 /*******************************************************************************
                          CREATE FIREWALL RULES
