@@ -386,6 +386,32 @@ resource "azurerm_availability_set" "uks_as_linux" {
 }
 
 /*******************************************************************************
+                         CREATE LINUX FUNCTION APPS
+*******************************************************************************/
+
+module "linux_function_app" {
+  source                     = "./modules/fa_lin"
+  name                       = "fa-uks-linux-01"
+  location                   = module.rg_app.location
+  resource_group_name        = module.rg_app.name
+  app_service_plan_id        = azurerm_service_plan.linux_plan.id
+  storage_account_name       = module.storage_app_1.name
+  storage_account_access_key = module.storage_app_1.primary_access_key
+
+  runtime = "python"
+  version = "3.10"
+
+  app_settings = {
+    "CUSTOM_ENV" = "dev"
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+/*******************************************************************************
                          CREATE FIREWALL RULES
 *******************************************************************************/
 
@@ -399,21 +425,82 @@ resource "azurerm_availability_set" "uks_as_linux" {
                          CREATE STORAGE ACCOUNTS
 *******************************************************************************/
 
+module "storage_app_1" {
+  source              = "./modules/storage"
+  name                = "sauksfuncapp${random_string.random.result}"
+  location            = module.rg_app.location
+  resource_group_name = module.rg_app.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #account_kind                = "StorageV2"
 
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
 
+module "storage_general" {
+  source              = "./modules/storage"
+  name                = "sauksgeneral${random_string.random.result}"
+  location            = module.rg_app.location
+  resource_group_name = module.rg_app.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #account_kind                = "StorageV2"
 
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
 
+module "storage_site" {
+  source              = "./modules/storage"
+  name                = "sauksstaticsite${random_string.random.result}"
+  location            = module.rg_app.location
+  resource_group_name = module.rg_app.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #kind                = "StorageV2"
 
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
 
+module "storage_vm" {
+  source              = "./modules/storage"
+  name                = "sauksvms${random_string.random.result}"
+  location            = module.rg_app.location
+  resource_group_name = module.rg_app.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #kind                = "StorageV2"
 
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
 
+module "storage_archive" {
+  source              = "./modules/storage"
+  name                = "sauksarchive${random_string.random.result}"
+  location            = module.rg_app.location
+  resource_group_name = module.rg_app.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #kind                = "StorageV2"
 
-
-
-
-
-
-
-
-
-
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
