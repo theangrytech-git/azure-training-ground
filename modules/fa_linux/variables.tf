@@ -35,7 +35,7 @@ variable "runtime" {
   default     = "python"
 }
 
-variable "version" {
+variable "runtime_version" {
   type        = string
   description = "Version of the runtime (e.g. 3.10, 18)"
   default     = "3.10"

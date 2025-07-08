@@ -24,7 +24,7 @@ updated or changed in future commits.
 /*******************************************************************************
                          CREATE LOCAL VARIABLES
 *******************************************************************************/
-
+data "azurerm_client_config" "current" {}
 data "azurerm_subscription" "current" {}
 output "current_subscription_display_name" {
 value = data.azurerm_subscription.current
@@ -139,6 +139,23 @@ module "vnet_uks_main" {
 
   ]
 
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+/*******************************************************************************
+                         CREATE PRIVATE DNS ZONES
+*******************************************************************************/
+
+module "private_dns_postgres" {
+  source              = "./modules/priv_dns_zone"
+  zone_name           = "privatelink.postgres.database.azure.com"
+  resource_group_name = module.rg_networking.name
+  virtual_network_links = {
+    "vnet-db" = module.vnet_uks_main.subnet_ids["subnet-db"]
+  }
   tags = {
     environment = "training"
     owner       = "op9"
@@ -381,7 +398,43 @@ resource "azurerm_availability_set" "uks_as_linux" {
   managed                      = true
   tags = {
     environment = "training"
-    owner       = "linux-team"
+    owner       = "ops9"
+  }
+}
+
+/*******************************************************************************
+                         CREATE APP SERVICE PLANS
+*******************************************************************************/
+
+module "asp_y1" {
+  source              = "./modules/asp"
+  name                = "asp-uks-linux-plan-01"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+
+  os_type     = "Linux"
+  sku_name    = "Y1"  # Y1 = Linux Consumption; P1v2 = Premium; B1 = Basic
+  worker_count = 1
+
+  tags = {
+    environment = "training"
+    owner       = "ops9"
+  }
+}
+
+module "asp_b1" {
+  source              = "./modules/asp"
+  name                = "asp-uks-linux-plan-01"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+
+  os_type     = "Linux"
+  sku_name    = "B1"  # Y1 = Linux Consumption; P1v2 = Premium; B1 = Basic
+  worker_count = 1
+
+  tags = {
+    environment = "training"
+    owner       = "ops9"
   }
 }
 
@@ -389,21 +442,90 @@ resource "azurerm_availability_set" "uks_as_linux" {
                          CREATE LINUX FUNCTION APPS
 *******************************************************************************/
 
-module "linux_function_app" {
-  source                     = "./modules/fa_lin"
+module "linux_fa_y1" {
+  source                     = "./modules/fa_linux"
   name                       = "fa-uks-linux-01"
-  location                   = module.rg_app.location
-  resource_group_name        = module.rg_app.name
-  app_service_plan_id        = azurerm_service_plan.linux_plan.id
+  location                   = module.rg_compute.location
+  resource_group_name        = module.rg_compute.name
+  app_service_plan_id        = module.asp_y1.id
   storage_account_name       = module.storage_app_1.name
   storage_account_access_key = module.storage_app_1.primary_access_key
 
   runtime = "python"
-  version = "3.10"
-
+  runtime_version = "3.10"  # Specify the Python version you want to use
+  #version = module.fa_lin.site_config.application_stack[0].python_version.version
   app_settings = {
     "CUSTOM_ENV" = "dev"
   }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+module "linux_fa_b1" {
+  source                     = "./modules/fa_linux"
+  name                       = "fa-uks-linux-02"
+  location                   = module.rg_compute.location
+  resource_group_name        = module.rg_compute.name
+  app_service_plan_id        = module.asp_b1.id
+  storage_account_name       = module.storage_app_1.name
+  storage_account_access_key = module.storage_app_1.primary_access_key
+
+  runtime = "python"
+  runtime_version = "3.10"  # Specify the Python version you want to use
+  #version = module.fa_lin.site_config.application_stack[0].python_version.version
+  app_settings = {
+    "CUSTOM_ENV" = "dev"
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+module "linux_wa_b1" {
+  source              = "./modules/wa_linux"
+  name                = "wa-uks-linux-01"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  app_service_plan_id = module.asp_b1.id
+  runtime             = "python"
+  runtime_version             = "3.10"
+
+  app_settings = {
+  "DB1_NAME"     = "app_db"
+  "DB1_CONN"     = "Host=${module.postgres.fqdn};Port=5432;Database=app_db;Username=${module.postgres.admin_username};Password=${module.postgres.admin_password};SslMode=Require"
+
+  "DB2_NAME"     = "audit_db"
+  "DB2_CONN"     = "Host=${module.postgres.fqdn};Port=5432;Database=audit_db;Username=${module.postgres.admin_username};Password=${module.postgres.admin_password};SslMode=Require"
+
+  "FUNCTIONS_WORKER_RUNTIME" = "python"
+  "WEBSITE_RUN_FROM_PACKAGE" = "1"
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+/*******************************************************************************
+                            CREATE DATABASES
+*******************************************************************************/
+
+module "postgres" {
+  source              = "./modules/postgres_db"
+  name                = "pg-uks-app-01"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  admin_username      = "pgadminuser"
+  admin_password      = random_password.vm_admin_password.result
+  db_names             = ["webappdb", "auditdb",]
+  subnet_id           = module.vnet_uks_main .subnet_ids["subnet-db"]
+  private_dns_zone_id = module.private_dns_postgres.id
 
   tags = {
     environment = "training"
@@ -415,6 +537,33 @@ module "linux_function_app" {
                          CREATE FIREWALL RULES
 *******************************************************************************/
 
+/*******************************************************************************
+                         CREATE KEY VAULTS
+*******************************************************************************/
+
+module "keyvault" {
+  source              = "./modules/keyvault"
+  name                = "kv-uks-${random_string.random.result}"
+  location            = module.rg_security.location
+  resource_group_name = module.rg_security.name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+
+  access_policies = [
+    {
+      tenant_id               = data.azurerm_client_config.current.tenant_id
+      object_id               = data.azurerm_client_config.current.object_id
+      key_permissions         = ["Get", "List"]
+      secret_permissions      = ["Get", "Set", "List"]
+      certificate_permissions = []
+      storage_permissions     = []
+    }
+  ]
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
 
 /*******************************************************************************
                          CREATE NAT RULES
@@ -428,8 +577,8 @@ module "linux_function_app" {
 module "storage_app_1" {
   source              = "./modules/storage"
   name                = "sauksfuncapp${random_string.random.result}"
-  location            = module.rg_app.location
-  resource_group_name = module.rg_app.name
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -444,8 +593,8 @@ module "storage_app_1" {
 module "storage_general" {
   source              = "./modules/storage"
   name                = "sauksgeneral${random_string.random.result}"
-  location            = module.rg_app.location
-  resource_group_name = module.rg_app.name
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -460,8 +609,8 @@ module "storage_general" {
 module "storage_site" {
   source              = "./modules/storage"
   name                = "sauksstaticsite${random_string.random.result}"
-  location            = module.rg_app.location
-  resource_group_name = module.rg_app.name
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -476,8 +625,8 @@ module "storage_site" {
 module "storage_vm" {
   source              = "./modules/storage"
   name                = "sauksvms${random_string.random.result}"
-  location            = module.rg_app.location
-  resource_group_name = module.rg_app.name
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -492,8 +641,24 @@ module "storage_vm" {
 module "storage_archive" {
   source              = "./modules/storage"
   name                = "sauksarchive${random_string.random.result}"
-  location            = module.rg_app.location
-  resource_group_name = module.rg_app.name
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  account_tier        = "Standard"
+  replication_type    = "LRS"
+  access_tier         = "Hot"
+  #kind                = "StorageV2"
+
+  tags = {
+    environment = "training"
+    team        = "ops9"
+  }
+}
+
+module "storage_db" {
+  source              = "./modules/storage"
+  name                = "sauksdatabase${random_string.random.result}"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"

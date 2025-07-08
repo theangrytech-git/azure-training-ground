@@ -7,7 +7,5 @@ resource "azurerm_storage_account" "uks_storage_account" {
   access_tier              = var.access_tier
   account_kind                     = var.account_kind
 
-  enable_https_traffic_only = true
-
   tags = var.tags
 }

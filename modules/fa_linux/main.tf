@@ -9,8 +9,8 @@ resource "azurerm_linux_function_app" "fa_linux" {
 
   site_config {
     application_stack {
-      python_version = var.runtime == "python" ? var.version : null
-      node_version   = var.runtime == "node" ? var.version : null
+      python_version = var.runtime == "python" ? var.runtime_version : null
+      node_version   = var.runtime == "node" ? var.runtime_version : null
       # Add more runtimes as needed
     }
   }
