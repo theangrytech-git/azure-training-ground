@@ -394,10 +394,54 @@ module "bastion" {
 }
 
 /*******************************************************************************
-                         CREATE AZURE VIRTUAL DESKTOP
+                         CREATE CONTAINER INSTANCES
 *******************************************************************************/
 
+module "aci_nginx_1" {
+  source              = "./modules/container_instance"
+  name                = "aci-nginx-training-${random_string.random.result}"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
 
+  container_name = "nginx"
+  image          = "nginx:latest"
+  cpu            = 1
+  memory         = 1.5
+  port           = 80
+
+  dns_name_label = "nginx-uks-training"
+  environment_variables = {
+    ENVIRONMENT = "dev"
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+module "aci_hello" {
+  source              = "./modules/container_instance"
+  name                = "aci-nginx-hello-${random_string.random.result}"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+
+  container_name = "hello-world"
+  image          = "mcr.microsoft.com/mcr/hello-world:latest"
+  cpu            = 0.5
+  memory         = 1.5
+  port           = 443
+
+  dns_name_label = "nginx-uks-hello"
+  environment_variables = {
+    ENVIRONMENT = "dev"
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
 
 
 /*******************************************************************************
