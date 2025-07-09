@@ -136,6 +136,10 @@ module "vnet_uks_main" {
       name             = "subnet-security"
       address_prefixes = ["10.0.5.0/24"]
     },
+    {
+      name             = "AzureBastionSubnet"
+      address_prefixes = ["10.0.6.0/26"]
+    }
 
   ]
 
@@ -364,6 +368,24 @@ module "vmss_win_1" {
   admin_password      = random_password.vm_admin_password.result
 
   instance_count = 2
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
+/*******************************************************************************
+                         CREATE BASTION HOST
+*******************************************************************************/
+
+module "bastion" {
+  source              = "./modules/bastion"
+  name                = "bastion-uks-training"
+  #dns_name            = null
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  subnet_id           = module.vnet_uks_main.subnet_ids["AzureBastionSubnet"]
 
   tags = {
     environment = "training"
