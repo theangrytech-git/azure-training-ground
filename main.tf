@@ -443,6 +443,24 @@ module "aci_hello" {
   }
 }
 
+/*******************************************************************************
+                         CREATE CONTAINER REGIRSTRIES
+*******************************************************************************/
+
+module "acr_training" {
+  source              = "./modules/container_registry"
+  name                = "acrukstraining"
+  location            = module.rg_compute.location
+  resource_group_name = module.rg_compute.name
+  sku                 = "Standard"
+  admin_enabled       = true
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
 
 /*******************************************************************************
                          CREATE AVAILABILITY SETS
