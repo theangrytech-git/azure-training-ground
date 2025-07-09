@@ -394,6 +394,13 @@ module "bastion" {
 }
 
 /*******************************************************************************
+                         CREATE AZURE VIRTUAL DESKTOP
+*******************************************************************************/
+
+
+
+
+/*******************************************************************************
                          CREATE AVAILABILITY SETS
 *******************************************************************************/
 
@@ -586,6 +593,34 @@ module "keyvault" {
     owner       = "op9"
   }
 }
+
+/*******************************************************************************
+                         CREATE APP CONFIGURATION
+*******************************************************************************/
+
+module "appconfig" {
+  source              = "./modules/appconfig"
+  name                = "appconfig-uks-${random_string.random.result}"
+  location            = module.rg_security.location
+  resource_group_name = module.rg_security.name
+
+  key_values = {
+    "ENVIRONMENT" = {
+      value = "training"
+    }
+    "API_BASE_URL" = {
+      value       = "https://api.example.com"
+      value_label = "dev"
+      value_type  = "text/plain"
+    }
+  }
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
+
 
 /*******************************************************************************
                          CREATE NAT RULES
