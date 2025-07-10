@@ -37,6 +37,8 @@ value = data.azurerm_subscription.current
 
 resource "random_string" "random" {
   length           = 3
+  lower = true
+  upper = false
   numeric = true
   special          = false
 }
@@ -55,7 +57,7 @@ resource "random_password" "vm_admin_password" {
 *******************************************************************************/
 module "rg_compute" {
   source   = "./modules/resource_group"
-  name     = "rg-uks-compute"
+  name     = "rg-uks-compute1"
   location = "uksouth"
   tags = {
     environment = "training"
@@ -65,7 +67,7 @@ module "rg_compute" {
 
 module "rg_storage" {
   source   = "./modules/resource_group"
-  name     = "rg-uks-storage"
+  name     = "rg-uks-storage1"
   location = "uksouth"
   tags = {
     environment = "training"
@@ -75,7 +77,7 @@ module "rg_storage" {
 
 module "rg_monitoring" {
   source   = "./modules/resource_group"
-  name     = "rg-uks-monitoring"
+  name     = "rg-uks-monitoring1"
   location = "uksouth"
   tags = {
     environment = "training"
@@ -85,7 +87,7 @@ module "rg_monitoring" {
 
 module "rg_networking" {
   source   = "./modules/resource_group"
-  name     = "rg-uks-networking"
+  name     = "rg-uks-networking1"
   location = "uksouth"
   tags = {
     environment = "training"
@@ -95,7 +97,7 @@ module "rg_networking" {
 
 module "rg_security" {
   source   = "./modules/resource_group"
-  name     = "rg-uks-security"
+  name     = "rg-uks-security1"
   location = "uksouth"
   tags = {
     environment = "training"
@@ -300,6 +302,9 @@ module "win_vm_1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.log_analytics
+  ]
 }
 
 module "win_vm_2" {
@@ -316,6 +321,9 @@ module "win_vm_2" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.log_analytics
+  ]
 }
 
 /*******************************************************************************
@@ -336,6 +344,9 @@ module "lin_vm_1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.log_analytics
+  ]
 }
 
 module "lin_vm_2" {
@@ -352,6 +363,9 @@ module "lin_vm_2" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.log_analytics
+  ]
 }
 
 /*******************************************************************************
@@ -373,6 +387,9 @@ module "vmss_win_1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.log_analytics
+  ]
 }
 
 /*******************************************************************************
@@ -553,6 +570,10 @@ module "linux_fa_y1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.asp_y1,
+    module.storage_app_1
+  ]
 }
 
 module "linux_fa_b1" {
@@ -575,6 +596,10 @@ module "linux_fa_b1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.asp_b1,
+    module.storage_app_1
+  ]
 }
 
 module "linux_wa_b1" {
@@ -601,6 +626,10 @@ module "linux_wa_b1" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [
+    module.asp_b1,
+    #module.storage_app_1
+  ]
 }
 
 /*******************************************************************************
@@ -685,9 +714,21 @@ module "appconfig" {
 
 
 /*******************************************************************************
-                         CREATE NAT RULES
+                         CREATE LOG ANALYTICS WORKSPACE
 *******************************************************************************/
 
+module "log_analytics" {
+  source              = "./modules/log_analytics"
+  name                = "la-uks-training"
+  location            = module.rg_monitoring.location
+  resource_group_name = module.rg_monitoring.name
+  retention_in_days   = 60
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
 
 /*******************************************************************************
                          CREATE STORAGE ACCOUNTS
