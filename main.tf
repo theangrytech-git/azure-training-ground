@@ -123,14 +123,16 @@ module "vnet_uks_main" {
     {
       name             = "subnet-db"
       address_prefixes = ["10.0.2.0/24"]
-      delegation = {
-        name = "pg-delegation"
-        service_delegation = {
-          name    = "Microsoft.DBforPostgreSQL/flexibleServers"
-          actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+      delegations = [
+    {
+      name = "pg-delegation"
+      service_delegation = {
+        name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+        actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+      }
     }
-  }
-},
+  ]
+  },
     {
       name             = "subnet-storage"
       address_prefixes = ["10.0.3.0/24"]
@@ -657,6 +659,7 @@ module "postgres" {
     environment = "training"
     owner       = "op9"
   }
+  depends_on = [module.vnet_uks_main]
 }
 
 /*******************************************************************************
@@ -743,8 +746,8 @@ module "log_analytics" {
 module "storage_app_1" {
   source              = "./modules/storage"
   name                = "sauksfuncapp${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -759,8 +762,8 @@ module "storage_app_1" {
 module "storage_general" {
   source              = "./modules/storage"
   name                = "sauksgeneral${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -775,8 +778,8 @@ module "storage_general" {
 module "storage_site" {
   source              = "./modules/storage"
   name                = "sauksstaticsite${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -791,8 +794,8 @@ module "storage_site" {
 module "storage_vm" {
   source              = "./modules/storage"
   name                = "sauksvms${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -807,8 +810,8 @@ module "storage_vm" {
 module "storage_archive" {
   source              = "./modules/storage"
   name                = "sauksarchive${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
@@ -823,8 +826,8 @@ module "storage_archive" {
 module "storage_db" {
   source              = "./modules/storage"
   name                = "sauksdatabase${random_string.random.result}"
-  location            = module.rg_compute.location
-  resource_group_name = module.rg_compute.name
+  location            = module.rg_storage.location
+  resource_group_name = module.rg_storage.name
   account_tier        = "Standard"
   replication_type    = "LRS"
   access_tier         = "Hot"
