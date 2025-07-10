@@ -113,7 +113,7 @@ module "vnet_uks_main" {
   name                = "vnet-uks-main"
   location            = "uksouth"
   resource_group_name = module.rg_networking.name
-  address_space       = ["10.0.0.0/22"]
+  address_space       = ["10.0.0.0/20"]
 
   subnets = [
     {
@@ -206,7 +206,7 @@ module "nsg_vm" {
     },
     {
       name                       = "AllowRDP"
-      priority                   = 110
+      priority                   = 120
       direction                  = "Inbound"
       access                     = "Allow"
       protocol                   = "Tcp"
@@ -257,7 +257,7 @@ module "nsg_storage" {
     },
     {
       name                       = "AllowSMB"
-      priority                   = 110
+      priority                   = 120
       direction                  = "Inbound"
       access                     = "Allow"
       protocol                   = "Tcp"
@@ -268,7 +268,7 @@ module "nsg_storage" {
     },
     {
       name                       = "AllowNFS"
-      priority                   = 110
+      priority                   = 130
       direction                  = "Inbound"
       access                     = "Allow"
       protocol                   = "Tcp"
@@ -532,7 +532,7 @@ module "asp_y1" {
 
 module "asp_b1" {
   source              = "./modules/asp"
-  name                = "asp-uks-linux-plan-01"
+  name                = "asp-uks-linux-plan-02"
   location            = module.rg_compute.location
   resource_group_name = module.rg_compute.name
 
