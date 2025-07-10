@@ -123,8 +123,14 @@ module "vnet_uks_main" {
     {
       name             = "subnet-db"
       address_prefixes = ["10.0.2.0/24"]
-      service_endpoints = ["Microsoft.Storage"]
-    },
+      delegation = {
+        name = "pg-delegation"
+        service_delegation = {
+          name    = "Microsoft.DBforPostgreSQL/flexibleServers"
+          actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+},
     {
       name             = "subnet-storage"
       address_prefixes = ["10.0.3.0/24"]
@@ -160,7 +166,7 @@ module "private_dns_postgres" {
   zone_name           = "privatelink.postgres.database.azure.com"
   resource_group_name = module.rg_networking.name
   virtual_network_links = {
-    "vnet-db" = module.vnet_uks_main.subnet_ids["subnet-db"]
+    "vnet-db" = module.vnet_uks_main.vnet_id
   }
   tags = {
     environment = "training"
@@ -289,7 +295,7 @@ module "nsg_storage" {
 *******************************************************************************/
 module "win_vm_1" {
   source              = "./modules/vm_win"
-  name                = "vm-uks-win-${random_string.random.result}-01"
+  name                = "vm-uks-win-01"
   location            = module.rg_compute.location
   resource_group_name = module.rg_compute.name
   subnet_id           = module.vnet_uks_main.subnet_ids["subnet-vm"]
@@ -309,7 +315,7 @@ module "win_vm_1" {
 
 module "win_vm_2" {
   source              = "./modules/vm_win"
-  name                = "vm-uks-win-${random_string.random.result}-02"
+  name                = "vm-uks-win-02"
   location            = module.rg_compute.location
   resource_group_name = module.rg_compute.name
   subnet_id           = module.vnet_uks_main.subnet_ids["subnet-vm"]

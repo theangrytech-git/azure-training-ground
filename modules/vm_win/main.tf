@@ -6,7 +6,7 @@ resource "azurerm_network_interface" "uks_win_nic" {
   ip_configuration {
     name                          = "${var.name}-ipconfig"
     subnet_id                     = var.subnet_id
-    private_ip_address_allocation = "dynamic"
+    private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = var.public_ip_enabled ? azurerm_public_ip.uks_win_vm_pip[0].id : null
   }
   tags = var.tags

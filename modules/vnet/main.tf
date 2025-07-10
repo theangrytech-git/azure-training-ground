@@ -13,6 +13,18 @@ resource "azurerm_subnet" "subnets" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.vnet_uks.name
   address_prefixes     = each.value.address_prefixes
-  #service_endpoints    = lookup(each.value, "service_endpoints", null)
-  #delegations          = lookup(each.value, "delegations", [])
+
+  service_endpoints = lookup(each.value, "service_endpoints", null)
+
+  dynamic "delegation" {
+    for_each = lookup(each.value, "delegation", null) != null ? [1] : []
+    content {
+      name = each.value.delegation.name
+
+      service_delegation {
+        name    = each.value.delegation.service_delegation.name
+        actions = each.value.delegation.service_delegation.actions
+      }
+    }
+  }
 }

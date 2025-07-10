@@ -32,7 +32,7 @@ variable "purge_protection_enabled" {
 variable "enable_rbac_authorization" {
   description = "Whether to use RBAC instead of access policies"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "tags" {
