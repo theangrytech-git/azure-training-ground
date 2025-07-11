@@ -315,6 +315,15 @@ module "win_vm_1" {
   ]
 }
 
+module "diag_win_vm1" {
+  source                      = "./modules/diagnostics"
+  name                        = "diag-${module.win_vm_1.vm_name}"
+  target_resource_id          = module.win_vm_1.vm_id
+  log_analytics_workspace_id  = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
+
 module "win_vm_2" {
   source              = "./modules/vm_win"
   name                = "vm-uks-win-02"
@@ -332,6 +341,15 @@ module "win_vm_2" {
   depends_on = [
     module.log_analytics
   ]
+}
+
+module "diag_win_vm2" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.win_vm_2.vm_name}"
+  target_resource_id        = module.win_vm_2.vm_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 /*******************************************************************************
@@ -357,6 +375,15 @@ module "lin_vm_1" {
   ]
 }
 
+module "diag_lin_vm1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.lin_vm_1.vm_name}"
+  target_resource_id        = module.lin_vm_1.vm_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
+
 module "lin_vm_2" {
   source              = "./modules/vm_lin"
   name                = "vm-uks-linux-${random_string.random.result}-02"
@@ -374,6 +401,15 @@ module "lin_vm_2" {
   depends_on = [
     module.log_analytics
   ]
+}
+
+module "diag_lin_vm2" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.lin_vm_2.vm_name}"
+  target_resource_id        = module.lin_vm_2.vm_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 /*******************************************************************************
@@ -400,6 +436,15 @@ module "vmss_win_1" {
   ]
 }
 
+module "diag_vmss_vm1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.vmss_win_1.vmss_name}"
+  target_resource_id        = module.vmss_win_1.vmss_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
+
 /*******************************************************************************
                          CREATE BASTION HOST
 *******************************************************************************/
@@ -416,6 +461,15 @@ module "bastion" {
     environment = "training"
     owner       = "op9"
   }
+}
+
+module "diag_bastion" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.bastion.name}"
+  target_resource_id        = module.bastion.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 /*******************************************************************************
@@ -445,6 +499,15 @@ module "aci_nginx_1" {
   }
 }
 
+module "diag_aci_nginx_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.aci_nginx_1.name}"
+  target_resource_id        = module.aci_nginx_1.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
+
 module "aci_hello" {
   source              = "./modules/container_instance"
   name                = "aci-nginx-hello-${random_string.random.result}"
@@ -468,6 +531,15 @@ module "aci_hello" {
   }
 }
 
+module "diag_aci_hello" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.aci_hello.name}"
+  target_resource_id        = module.aci_hello.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
+
 /*******************************************************************************
                          CREATE CONTAINER REGIRSTRIES
 *******************************************************************************/
@@ -486,6 +558,14 @@ module "acr_training" {
   }
 }
 
+module "diag_acr_training" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.acr_training.name}"
+  target_resource_id        = module.acr_training.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
+}
 
 /*******************************************************************************
                          CREATE AVAILABILITY SETS
@@ -571,7 +651,9 @@ module "linux_fa_y1" {
   runtime_version = "3.10"  # Specify the Python version you want to use
   #version = module.fa_lin.site_config.application_stack[0].python_version.version
   app_settings = {
-    "CUSTOM_ENV" = "dev"
+    "CUSTOM_ENV" = "training"
+    "APPINSIGHTS_CONNECTION_STRING" = module.app_insights.connection_string
+    "APPLICATIONINSIGHTS_ROLE_NAME" = "fa-uks-linux-01"
   }
 
   tags = {
@@ -582,6 +664,15 @@ module "linux_fa_y1" {
     module.asp_y1,
     module.storage_app_1
   ]
+}
+
+module "diag_linux_fa_y1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.linux_fa_y1.function_app_name}"
+  target_resource_id        = module.linux_fa_y1.function_app_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 module "linux_fa_b1" {
@@ -597,7 +688,9 @@ module "linux_fa_b1" {
   runtime_version = "3.10"  # Specify the Python version you want to use
   #version = module.fa_lin.site_config.application_stack[0].python_version.version
   app_settings = {
-    "CUSTOM_ENV" = "dev"
+    "CUSTOM_ENV" = "training"
+    "APPINSIGHTS_CONNECTION_STRING" = module.app_insights.connection_string
+    "APPLICATIONINSIGHTS_ROLE_NAME" = "fa-uks-linux-02"
   }
 
   tags = {
@@ -608,6 +701,15 @@ module "linux_fa_b1" {
     module.asp_b1,
     module.storage_app_1
   ]
+}
+
+module "diag_linux_fa_b1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.linux_fa_b1.function_app_name}"
+  target_resource_id        = module.linux_fa_b1.function_app_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 module "linux_wa_b1" {
@@ -628,6 +730,9 @@ module "linux_wa_b1" {
 
   "FUNCTIONS_WORKER_RUNTIME" = "python"
   "WEBSITE_RUN_FROM_PACKAGE" = "1"
+  "CUSTOM_ENV" = "training"
+  "APPINSIGHTS_CONNECTION_STRING" = module.app_insights.connection_string
+  "APPLICATIONINSIGHTS_ROLE_NAME" = "wa-uks-linux-01"
   }
 
   tags = {
@@ -638,6 +743,15 @@ module "linux_wa_b1" {
     module.asp_b1,
     #module.storage_app_1
   ]
+}
+
+module "diag_linux_wa_b1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.linux_wa_b1.web_app_name}"
+  target_resource_id        = module.linux_wa_b1.web_app_id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories              = []
+  metric_categories           = ["AllMetrics"]
 }
 
 /*******************************************************************************
@@ -662,9 +776,14 @@ module "postgres" {
   depends_on = [module.vnet_uks_main]
 }
 
-/*******************************************************************************
-                         CREATE FIREWALL RULES
-*******************************************************************************/
+module "diag_postgres" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.postgres.database_names[0]}"
+  target_resource_id        = module.postgres.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = ["PostgreSQLLogs"]
+  metric_categories  = ["AllMetrics"]
+}
 
 /*******************************************************************************
                          CREATE KEY VAULTS
@@ -694,6 +813,15 @@ module "keyvault" {
   }
 }
 
+module "diag_keyvault" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.keyvault.name}"
+  target_resource_id        = module.keyvault.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = ["AuditEvent"]
+  metric_categories  = ["AllMetrics"]
+}
+
 /*******************************************************************************
                          CREATE APP CONFIGURATION
 *******************************************************************************/
@@ -721,6 +849,23 @@ module "appconfig" {
   }
 }
 
+/*******************************************************************************
+                         CREATE APPLICATION INSIGHTS
+*******************************************************************************/
+
+module "app_insights" {
+  source              = "./modules/app_insights"
+  name                = "appi-uks-training"
+  location            = module.rg_monitoring.location
+  resource_group_name = module.rg_monitoring.name
+  application_type    = "web"
+  workspace_id        = module.log_analytics.workspace_id  # Optional, can be null
+
+  tags = {
+    environment = "training"
+    owner       = "op9"
+  }
+}
 
 /*******************************************************************************
                          CREATE LOG ANALYTICS WORKSPACE
@@ -759,6 +904,15 @@ module "storage_app_1" {
   }
 }
 
+module "diag_sa_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_app_1.name}"
+  target_resource_id        = module.storage_app_1.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
+}
+
 module "storage_general" {
   source              = "./modules/storage"
   name                = "sauksgeneral${random_string.random.result}"
@@ -773,6 +927,15 @@ module "storage_general" {
     environment = "training"
     team        = "ops9"
   }
+}
+
+module "diag_gen_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_general.name}"
+  target_resource_id        = module.storage_general.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
 }
 
 module "storage_site" {
@@ -791,6 +954,15 @@ module "storage_site" {
   }
 }
 
+module "diag_site_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_site.name}"
+  target_resource_id        = module.storage_site.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
+}
+
 module "storage_vm" {
   source              = "./modules/storage"
   name                = "sauksvms${random_string.random.result}"
@@ -805,6 +977,15 @@ module "storage_vm" {
     environment = "training"
     team        = "ops9"
   }
+}
+
+module "diag_vm_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_vm.name}"
+  target_resource_id        = module.storage_vm.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
 }
 
 module "storage_archive" {
@@ -823,6 +1004,15 @@ module "storage_archive" {
   }
 }
 
+module "diag_archive_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_archive.name}"
+  target_resource_id        = module.storage_archive.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
+}
+
 module "storage_db" {
   source              = "./modules/storage"
   name                = "sauksdatabase${random_string.random.result}"
@@ -837,4 +1027,13 @@ module "storage_db" {
     environment = "training"
     team        = "ops9"
   }
+}
+
+module "diag_storage_db_1" {
+  source                    = "./modules/diagnostics"
+  name                      = "diag-${module.storage_db.name}"
+  target_resource_id        = module.storage_db.id
+  log_analytics_workspace_id = module.log_analytics.workspace_id
+  log_categories     = []
+  metric_categories  = ["AllMetrics"]
 }

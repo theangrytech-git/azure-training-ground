@@ -13,3 +13,7 @@ output "admin_username" {
 output "admin_password" {
   value = var.admin_enabled ? azurerm_container_registry.container_registry.admin_password : null
 }
+
+output "name" {
+  value = azurerm_container_registry.container_registry.name
+}

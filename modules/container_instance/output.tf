@@ -9,3 +9,7 @@ output "ip_address" {
 output "id" {
   value = azurerm_container_group.container_group.id
 }
+
+output "name" {
+  value = azurerm_container_group.container_group.name
+}

@@ -22,3 +22,7 @@ output "connection_strings" {
 output "database_names" {
   value = [for db in azurerm_postgresql_flexible_server_database.pg_db : db.name]
 }
+
+output "id" {
+  value = azurerm_postgresql_flexible_server.pg_server.id
+}
